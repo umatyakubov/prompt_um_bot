@@ -1,3 +1,5 @@
+import aiohttp
+from aiogram.types import FSInputFile
 import asyncio
 import os
 

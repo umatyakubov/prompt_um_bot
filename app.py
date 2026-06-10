@@ -1,3 +1,5 @@
+import os
+from fastapi import Cookie
 from fastapi import FastAPI, Request, Form, UploadFile, File
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -81,7 +83,28 @@ def gallery():
 
 
 @app.get("/admin", response_class=HTMLResponse)
-def admin():
+def admin(admin_auth: str = Cookie(default=None)):
+    if admin_auth != os.getenv("ADMIN_PASSWORD"):
+        return """
+        <html>
+        <head>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <style>
+                body{font-family:Arial;background:#111;color:white;padding:20px}
+                input,button{width:100%;padding:14px;margin:8px 0;border-radius:12px;border:0}
+                button{background:#2ea6ff;color:white;font-weight:bold}
+            </style>
+        </head>
+        <body>
+            <h2>Admin Login</h2>
+            <form action="/login" method="post">
+                <input type="password" name="password" placeholder="Parolni kiriting" required>
+                <button type="submit">Kirish</button>
+            </form>
+        </body>
+        </html>
+        """
+
     return """
     <html>
     <head>
@@ -103,6 +126,15 @@ def admin():
     </body>
     </html>
     """
+
+@app.post("/login")
+def login(password: str = Form(...)):
+    if password == os.getenv("ADMIN_PASSWORD"):
+        response = RedirectResponse("/admin", status_code=303)
+        response.set_cookie(key="admin_auth", value=password, httponly=True)
+        return response
+
+    return HTMLResponse("Parol noto‘g‘ri", status_code=403)    
 
 
 @app.post("/add")
