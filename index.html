@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Promptlar Galereyasi</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <h1>📸 Promptlar Galereyasi</h1>
+  <input type="text" id="search" placeholder="Prompt qidirish...">
+</header>
+
+<div class="gallery" id="gallery"></div>
+
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <span class="close" id="close">&times;</span>
+    <img id="modalImg">
+    <h2 id="modalTitle"></h2>
+    <a id="promptBtn" target="_blank">Promtni olish</a>
+  </div>
+</div>
+
+<script>
+fetch('prompts.json')
+  .then(res => res.json())
+  .then(data => {
+    const gallery = document.getElementById("gallery");
+
+    function render(items) {
+      gallery.innerHTML = "";
+
+      items.forEach(item => {
+        gallery.innerHTML += `
+          <div class="item" onclick='openModal(${JSON.stringify(item)})'>
+            <img src="${item.image}">
+          </div>
+        `;
+      });
+    }
+
+    render(data);
+
+    document.getElementById("search").addEventListener("input", function() {
+      const value = this.value.toLowerCase();
+      const filtered = data.filter(item =>
+        item.title.toLowerCase().includes(value) ||
+        item.category.toLowerCase().includes(value)
+      );
+      render(filtered);
+    });
+  });
+
+function openModal(item) {
+  document.getElementById("modal").style.display = "flex";
+  document.getElementById("modalImg").src = item.image;
+  document.getElementById("modalTitle").innerText = item.title;
+  document.getElementById("promptBtn").href = item.link;
+}
+
+document.getElementById("close").onclick = function() {
+  document.getElementById("modal").style.display = "none";
+}
+
+document.getElementById("modal").onclick = function(e) {
+  if (e.target.id === "modal") {
+    document.getElementById("modal").style.display = "none";
+  }
+}
+</script>
+
+</body>
+</html>
