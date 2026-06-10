@@ -125,3 +125,39 @@ def add_prompt(title: str = Form(...), link: str = Form(...), image: UploadFile 
     conn.close()
 
     return RedirectResponse("/admin", status_code=303)
+
+    import os
+from fastapi import Header, HTTPException
+
+ADMIN_SECRET = os.getenv("ADMIN_SECRET")
+
+
+@app.post("/api/add-from-bot")
+def add_from_bot(
+    title: str = Form(...),
+    link: str = Form(...),
+    image: UploadFile = File(...),
+    x_admin_secret: str = Header(None)
+):
+    if x_admin_secret != ADMIN_SECRET:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    IMAGES_DIR.mkdir(exist_ok=True)
+
+    safe_name = image.filename.replace(" ", "_")
+    file_path = IMAGES_DIR / safe_name
+
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(image.file, buffer)
+
+    image_url = f"/images/{safe_name}"
+
+    conn = db()
+    conn.execute(
+        "INSERT INTO prompts (title, image, link) VALUES (?, ?, ?)",
+        (title, image_url, link)
+    )
+    conn.commit()
+    conn.close()
+
+    return {"ok": True}
